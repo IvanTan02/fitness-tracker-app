@@ -6,8 +6,9 @@ project scope and phases — this file is about *how* to write the code, not
 
 ## Project context
 
-Go web app for personal metrics tracking, starting with InBody scans and
-expected to grow additional feature domains over time (food/calorie tracking
+Go web app for personal metrics tracking (product name: Compo), starting with
+body composition scans and expected to grow additional feature domains over
+time (food/calorie tracking
 is the concrete next one). Currently one real user, but built to support
 multiple accounts from the start — every table and query is scoped by
 `user_id`. Optimize for simplicity and low maintenance over scale — there's

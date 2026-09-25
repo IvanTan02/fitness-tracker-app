@@ -4,3 +4,8 @@
 
 # macOS
 .DS_Store
+
+# Others
+*.postman_collection.json
+*.postman_environment.json
+*.postman_environment.json

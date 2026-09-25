@@ -1,22 +1,28 @@
-# InBody Tracker — Build Plan
+# Compo — Build Plan
 
-Personal fitness metrics tracker: logs InBody scan results (weight, body fat %,
-skeletal muscle mass, visceral fat, segmental lean mass), reads numbers off a
-photo of the printout via AI vision, charts trends, and tracks progress toward
-weight/body-fat/SMM goals. Single user (Ivan), fully free to run.
+Personal fitness metrics tracker: logs body composition scan results (weight,
+body fat %, skeletal muscle mass, visceral fat, segmental lean/fat mass, BMR,
+TEE), reads numbers off a photo of the scan printout via AI vision, charts
+trends, and tracks progress toward weight/body-fat/SMM goals. Deliberately
+scanner-agnostic — not tied to any one machine's report format (started with
+InBody in mind, actual gym hardware is Evolt 360; the schema and extraction
+prompt target Evolt 360's fields, and the AI extraction step is exactly the
+part that isolates the rest of the app from format differences if the
+scanner changes again). Single user (Ivan), fully free to run.
 
-Reference prototype: an HTML/JS artifact already built and working (Chart.js
-frontend, artifact-platform storage). Port its UI/UX logic — don't redesign
-from scratch.
+A mockup of the intended UI exists (Log scan / Trends / Goals screens,
+hamburger+drawer on mobile, fixed sidebar on desktop) — see the design
+reference used during Phase 2. It's a visual reference only, not working
+code to port.
 
 ## Extensibility intent
 
-This starts as one feature (InBody scans) but is expected to grow into more
-than one (food/calorie tracking is the concrete example on the table; others
-may follow — workouts, sleep, etc.). The project is structured from day one
-as a feature-package backend + tab-based frontend shell so a new domain is
-an *addition*, not a rewrite of the existing one. See "Project structure"
-below.
+This starts as one feature (body composition scans) but is expected to grow
+into more than one (food/calorie tracking is the concrete example on the
+table; others may follow — workouts, sleep, etc.). The project is structured
+from day one as a feature-package backend + tab-based frontend shell so a new
+domain is an *addition*, not a rewrite of the existing one. See "Project
+structure" below.
 
 ## Goals & constraints
 
@@ -35,7 +41,7 @@ below.
 |---|---|---|
 | Backend | Go (`chi` router) | — |
 | Database + Auth + Storage | **Supabase** (Postgres, Auth, Storage all in one project) | 500MB DB, 1GB storage, 50,000 MAU, all free — one dashboard instead of three services |
-| AI vision (photo → numbers) | **Google Gemini 2.5 Flash** | Free, vision-capable, 10 RPM / 250 RPD shared across all users — see rate-limit note below |
+| AI vision (photo → numbers) | **Google Gemini** (`gemini-3.8-flash`, the current free vision-capable model — Gemini 2.5 Flash was retired for new API keys during build) | Free tier, vision-capable, shared across all users — see rate-limit note below |
 | Hosting | **Render** free web service | Sleeps after 15 min idle; ~30s cold start, acceptable for personal use |
 | Frontend | Static HTML/CSS/Chart.js, embedded in the Go binary via `embed.FS` | One deployable binary, no separate frontend host |
 | Auth | **Supabase Auth** (email + password, verification & reset emails included) | Battery-included — no hand-rolled bcrypt/session code needed |
@@ -58,7 +64,7 @@ cap is the first thing that will need addressing — see Phase 6.
 ```
 /cmd/server/main.go        — wiring only: router, middleware, feature registration
 /internal/auth/            — Supabase JWT verification middleware (shared by all features)
-/internal/scans/           — InBody scan feature: handlers, queries, migrations
+/internal/scans/           — body composition scan feature: handlers, queries, migrations
 /internal/nutrition/       — (future) food/calorie tracking feature — same shape as scans/
 /internal/platform/        — shared infra: Supabase client, Gemini client, config
 /migrations/                — SQL migrations, numbered, one feature's tables per file
@@ -86,10 +92,14 @@ touching existing files.
 `users` is managed by Supabase Auth (`auth.users`) — we don't create our own
 table for it, just reference `auth.users.id` as the FK.
 
-**scans**
+**scans** — fields match Evolt 360's report (the actual scanner in use); the
+schema isn't tied to Evolt by name so a different scanner's data can still
+map onto it later
 ```
-id, user_id (FK → auth.users.id), date, weight, body_fat, smm, visceral_fat,
+id, user_id (FK → auth.users.id), date, weight, body_fat, lean_body_mass,
+body_fat_mass, smm, visceral_fat, bmr, tee,
 lean_left_arm, lean_right_arm, lean_trunk, lean_left_leg, lean_right_leg,
+fat_left_arm, fat_right_arm, fat_trunk, fat_left_leg, fat_right_leg,
 notes, report_photo_path, progress_photo_path, created_at
 ```
 (`*_photo_path` = path within the Supabase Storage bucket, not a full URL —
@@ -107,33 +117,46 @@ database layer, not just in application code — see Phase 1.
 
 ## Phases
 
-### Phase 1 — Backend + Supabase skeleton
-- [ ] Create Supabase project, enable email/password Auth
-- [ ] `go mod init`, `chi` router, `pgx` (or `supabase-go` where useful)
-      pointed at Supabase's Postgres connection string
-- [ ] Set up the feature-package structure (see "Project structure" above):
+### Phase 1 — Backend + Supabase skeleton ✅ done
+- [x] Create Supabase project, enable email/password Auth
+- [x] `go mod init`, `chi` router, `pgx` pointed at Supabase's Postgres
+      connection string (session pooler, IPv4-compatible)
+- [x] Set up the feature-package structure (see "Project structure" above):
       `/cmd/server`, `/internal/auth`, `/internal/scans`, `/internal/platform`
-- [ ] Migrations for `scans`, `goals` (FK to `auth.users.id`), filed under
-      `/migrations` as the scans feature's own numbered files
-- [ ] Row Level Security (RLS) policies on `scans` and `goals`: a user can
+- [x] Migrations for `scans`, `goals` (FK to `auth.users.id`), filed under
+      `/migrations` as the scans feature's own timestamped files
+- [x] Row Level Security (RLS) policies on `scans` and `goals`: a user can
       only select/insert/update/delete rows where `user_id = auth.uid()`
-- [ ] `internal/auth` middleware verifies the Supabase JWT (from the
-      `Authorization` header) on every protected route and extracts
-      `user_id` from it — don't re-implement session logic, trust Supabase's
-      token. This middleware is shared by every current and future feature.
-- [ ] Health check endpoint (unauthenticated)
-- [ ] **Keep-alive cron**: GitHub Actions workflow, `schedule: cron` every 3
-      days, single HTTP ping to the Supabase project (REST or auth health
-      endpoint) — prevents the 7-day free-tier pause
+- [x] `internal/auth` middleware verifies the Supabase JWT via JWKS (Supabase
+      has moved to signing keys instead of a shared legacy secret) on every
+      protected route and extracts `user_id` from it — don't re-implement
+      session logic, trust Supabase's token. Shared by every current and
+      future feature.
+- [x] Health check endpoint (unauthenticated)
+- [x] **Keep-alive cron**: GitHub Actions workflow, `schedule: cron` every 3
+      days, single HTTP ping to the Supabase project (auth health endpoint)
+      — prevents the 7-day free-tier pause
 
-### Phase 2 — Storage + AI extraction
-- [ ] Supabase Storage bucket for report/progress photos, with an RLS policy
-      restricting each user to their own folder (e.g. path prefixed by
-      `user_id/`)
-- [ ] `POST /api/extract` — accepts an image, calls Gemini 2.5 Flash with the
-      extraction prompt (see prototype), returns parsed JSON
-- [ ] Extraction failures must degrade gracefully — return an error the
-      frontend can show, never block manual entry
+Note: Supabase's key system changed since this plan was first written — it
+now issues **publishable**/**secret** keys instead of legacy anon/service_role
+JWTs. Env vars are `SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY`.
+
+### Phase 2 — Storage + AI extraction (in progress)
+- [x] Supabase Storage bucket (`scan-photos`, private) for report/progress
+      photos, with RLS policies restricting each user to their own
+      `user_id/`-prefixed folder
+- [x] `POST /api/extract` — accepts an image, calls Gemini
+      (`gemini-3.8-flash`) with the extraction prompt tuned to Evolt 360's
+      report layout, returns parsed JSON
+- [x] Extraction failures degrade gracefully — returns a JSON error the
+      frontend can show, never blocks manual entry
+- [x] Per-user daily rate limit on `/api/extract` (in-memory counter) so one
+      user can't burn through the shared Gemini quota
+- [ ] Wire the extracted/uploaded photo into actual Storage bucket writes
+      (currently `/api/extract` reads the upload and calls Gemini, but does
+      not yet persist the photo to Storage — that lands with Phase 3's scan
+      creation, since a photo only needs saving once the scan is actually
+      created)
 
 ### Phase 3 — CRUD API
 - [ ] `POST /api/scans`, `GET /api/scans`, `DELETE /api/scans/:id` — all
@@ -143,21 +166,23 @@ database layer, not just in application code — see Phase 1.
 - [ ] Ownership check on delete (`scan.user_id == request.user_id`) before
       allowing the operation, not just filtering the list view
 
-### Phase 4 — Frontend port
-- [ ] Build the shared shell (`web/index.html`): tab nav, auth/token
-      handling, shared `fetch` helper — this is what future features plug
-      into
-- [ ] Port existing HTML/CSS/Chart.js from the artifact prototype into
-      `web/scans.js` as the scans feature's tab
-- [ ] Replace `claude.use("db")` / `claude.use("assets")` / `claude.use("sample")`
-      calls with `fetch()` calls to the new API
-- [ ] Keep the three-tab layout (Log scan / Trends / Goals) and manual-entry
-      fallback exactly as in the prototype
+### Phase 4 — Frontend build
+- [ ] Build the shared shell (`web/index.html`): hamburger menu opening a
+      left-side drawer on mobile, fixed left sidebar on desktop; tab nav
+      (Log scan / Trends / Goals, with Nutrition greyed out as "soon");
+      auth/token handling; shared `fetch` helper — this is what future
+      features plug into
+- [ ] Build `web/scans.js` as the scans feature's tab: Log scan (upload +
+      manual-entry form), Trends (Chart.js line chart + latest-scan summary
+      card), Goals (target form + progress bars) — see the UI mockup used
+      during planning for the exact layout
+- [ ] Keep the three-tab layout and manual-entry fallback working even if
+      `/api/extract` is down or errors
 - [ ] Embed static assets in the Go binary
 
 ### Phase 5 — Deploy
 - [ ] Push to GitHub, connect Render, set env vars:
-      `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+      `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
       (server-side only, never shipped to the frontend), `DATABASE_URL`
       (Supabase's Postgres connection string), `GEMINI_API_KEY`
 - [ ] Confirm HTTPS works, confirm cold-start behavior is acceptable
@@ -177,10 +202,10 @@ database layer, not just in application code — see Phase 1.
 ## Open questions to confirm before/during build
 - Confirm whether to proxy image uploads through the backend or upload
   straight to Supabase Storage from the browser using a short-lived client
-  token (proxying is simpler and keeps the service-role key server-only —
+  token (proxying is simpler and keeps the secret key server-only —
   default to proxying unless upload volume becomes a bottleneck, which it
-  won't at this scale).
-- Confirm Gemini API key setup (Google AI Studio, no card).
+  won't at this scale). **Resolved: proxying**, per this doc's original default.
+- ~~Confirm Gemini API key setup~~ — done (Google AI Studio, no card).
 - Decide open signup vs. invite-only for other users joining (Supabase Auth
   supports both — invite-only just means disabling public signup and adding
   users manually or via an invite link).

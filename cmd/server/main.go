@@ -34,6 +34,8 @@ func main() {
 		log.Fatalf("setting up auth verifier: %v", err)
 	}
 
+	gemini := platform.NewGeminiClient(cfg.GeminiAPIKey)
+
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
@@ -42,7 +44,7 @@ func main() {
 
 	r.Group(func(r chi.Router) {
 		r.Use(verifier.Middleware())
-		scans.Register(r, db)
+		scans.Register(r, db, gemini)
 	})
 
 	log.Printf("listening on :%s", cfg.Port)

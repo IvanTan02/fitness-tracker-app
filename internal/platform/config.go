@@ -18,9 +18,7 @@ type Config struct {
 	GeminiAPIKey           string
 }
 
-// LoadConfig reads configuration from environment variables. GeminiAPIKey is
-// validated separately in Phase 2, since it isn't needed until the extraction
-// endpoint exists.
+// LoadConfig reads configuration from environment variables.
 func LoadConfig() (Config, error) {
 	cfg := Config{
 		Port:                   getEnvDefault("PORT", "8080"),
@@ -36,6 +34,7 @@ func LoadConfig() (Config, error) {
 		"SUPABASE_URL":             cfg.SupabaseURL,
 		"SUPABASE_PUBLISHABLE_KEY": cfg.SupabasePublishableKey,
 		"SUPABASE_SECRET_KEY":      cfg.SupabaseSecretKey,
+		"GEMINI_API_KEY":           cfg.GeminiAPIKey,
 	}
 	for name, val := range required {
 		if val == "" {
