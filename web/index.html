@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#121714">
+  <title>Compo · Body composition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+  <script src="/scans.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div id="toast-region" class="toast-region" aria-live="polite"></div>
+
+  <main id="auth-screen" class="auth-screen">
+    <section class="auth-intro">
+      <a class="brand brand-light" href="/" aria-label="Compo home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>compo</span>
+      </a>
+      <div class="auth-copy">
+        <p class="eyebrow">Your body, in context</p>
+        <h1>Progress you can<br><em>actually see.</em></h1>
+        <p>Track the numbers that matter. See where you’re heading, without the noise.</p>
+      </div>
+      <div class="metric-preview" aria-hidden="true">
+        <div class="preview-head"><span>12 week trend</span><span class="positive">↓ 4.8%</span></div>
+        <svg viewBox="0 0 520 160" preserveAspectRatio="none">
+          <defs><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8ff62" stop-opacity=".3"/><stop offset="1" stop-color="#d8ff62" stop-opacity="0"/></linearGradient></defs>
+          <path class="area" d="M0 35 C65 30 78 64 130 57 S210 69 260 82 S355 77 390 112 S460 103 520 128 L520 160 L0 160Z"/>
+          <path class="line" d="M0 35 C65 30 78 64 130 57 S210 69 260 82 S355 77 390 112 S460 103 520 128"/>
+        </svg>
+      </div>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-card">
+        <div class="mobile-brand brand"><span class="brand-mark"><i></i><i></i><i></i></span><span>compo</span></div>
+        <p class="eyebrow dark">Welcome back</p>
+        <h2 id="auth-title">Sign in to your account</h2>
+        <p id="auth-subtitle" class="muted">Continue tracking your progress.</p>
+        <form id="auth-form" novalidate>
+          <label>Email address<input id="auth-email" type="email" autocomplete="email" placeholder="you@example.com" required></label>
+          <label>Password<input id="auth-password" type="password" autocomplete="current-password" placeholder="At least 6 characters" minlength="6" required></label>
+          <button class="button primary full" type="submit"><span id="auth-submit-label">Sign in</span><span aria-hidden="true">→</span></button>
+        </form>
+        <p class="auth-switch"><span id="auth-switch-copy">New to Compo?</span> <button id="auth-switch" type="button">Create an account</button></p>
+      </div>
+    </section>
+  </main>
+
+  <div id="app" class="app" hidden>
+    <div id="nav-scrim" class="nav-scrim"></div>
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-top">
+        <a class="brand" href="#log"><span class="brand-mark"><i></i><i></i><i></i></span><span>compo</span></a>
+        <button id="close-nav" class="icon-button close-nav" aria-label="Close navigation">×</button>
+      </div>
+      <nav aria-label="Main navigation">
+        <p class="nav-label">Track</p>
+        <a class="nav-item active" href="#log" data-view="log"><span class="nav-icon">＋</span>Log scan</a>
+        <a class="nav-item" href="#trends" data-view="trends"><span class="nav-icon">↗</span>Trends</a>
+        <a class="nav-item" href="#goals" data-view="goals"><span class="nav-icon">◎</span>Goals</a>
+        <p class="nav-label nav-label-space">Coming next</p>
+        <span class="nav-item disabled"><span class="nav-icon">◇</span>Nutrition<span class="soon">Soon</span></span>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="profile-button" class="profile-chip" type="button">
+          <span id="profile-avatar" class="avatar">I</span>
+          <span><strong id="profile-name">Your profile</strong><small id="profile-email"></small></span>
+          <span>•••</span>
+        </button>
+      </div>
+    </aside>
+
+    <section class="workspace">
+      <header class="mobile-header">
+        <button id="open-nav" class="icon-button" aria-label="Open navigation">☰</button>
+        <a class="brand" href="#log"><span class="brand-mark"><i></i><i></i><i></i></span><span>compo</span></a>
+        <button id="mobile-profile" class="avatar small" aria-label="Edit profile">I</button>
+      </header>
+      <div id="view-root" class="view-root"></div>
+    </section>
+  </div>
+
+  <dialog id="profile-dialog" class="modal">
+    <form id="profile-form" method="dialog">
+      <div class="modal-head"><div><p class="eyebrow dark">Personal baseline</p><h2>Your profile</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+      <p class="muted">These details help put your measurements in context.</p>
+      <div class="form-grid profile-grid">
+        <label>Height (cm)<input id="profile-height" name="height_cm" type="number" min="100" max="250" step="0.1" placeholder="175" required></label>
+        <label>Age<input id="profile-age" name="age" type="number" min="13" max="120" placeholder="30" required></label>
+        <label class="span-2">Gender<select id="profile-gender" name="gender" required><option value="">Select one</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option><option value="prefer_not_to_say">Prefer not to say</option></select></label>
+      </div>
+      <div class="modal-actions"><button id="sign-out" class="button ghost danger" type="button">Sign out</button><button class="button primary" value="save" type="submit">Save profile</button></div>
+    </form>
+  </dialog>
+</body>
+</html>

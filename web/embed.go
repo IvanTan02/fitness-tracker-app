@@ -1,0 +1,20 @@
+// Package web embeds the browser application into the server binary.
+package web
+
+import (
+	"embed"
+	"io/fs"
+	"net/http"
+)
+
+//go:embed index.html styles.css app.js scans.js
+var files embed.FS
+
+// Handler serves the embedded frontend assets.
+func Handler() http.Handler {
+	assets, err := fs.Sub(files, ".")
+	if err != nil {
+		panic("creating embedded web filesystem: " + err.Error())
+	}
+	return http.FileServer(http.FS(assets))
+}
