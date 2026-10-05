@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{supabase_url}}/auth/v1/token?grant_type=password"
+method: POST
+headers:
+  apikey: "{{supabase_publishable_key}}"
+  Content-Type: application/json
+queryParams:
+  grant_type: password
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{auth_email}}",
+      "password": "{{auth_password}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Sign in succeeded', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.expect(body.access_token).to.be.a('string').and.not.empty;
+      pm.environment.set('access_token', body.access_token);
+    language: text/javascript
+order: 1000

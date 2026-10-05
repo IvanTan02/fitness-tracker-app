@@ -1,14 +1,8 @@
 # Compo — Build Plan
 
-Personal fitness metrics tracker: logs body composition scan results (weight,
-body fat %, skeletal muscle mass, visceral fat, segmental lean/fat mass, BMR,
-TEE), reads numbers off a photo of the scan printout via AI vision, charts
-trends, and tracks progress toward weight/body-fat/SMM goals. Deliberately
-scanner-agnostic — not tied to any one machine's report format (started with
-InBody in mind, actual gym hardware is Evolt 360; the schema and extraction
-prompt target Evolt 360's fields, and the AI extraction step is exactly the
-part that isolates the rest of the app from format differences if the
-scanner changes again). Single user (Ivan), fully free to run.
+Personal fitness metrics tracker: manually logs weight, body-fat percentage,
+and skeletal muscle mass, charts trends, and tracks progress toward lean-body
+goals. Single user (Ivan), fully free to run.
 
 A mockup of the intended UI exists (Log scan / Trends / Goals screens,
 hamburger+drawer on mobile, fixed sidebar on desktop) — see the design
@@ -141,44 +135,31 @@ Note: Supabase's key system changed since this plan was first written — it
 now issues **publishable**/**secret** keys instead of legacy anon/service_role
 JWTs. Env vars are `SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY`.
 
-### Phase 2 — Storage + AI extraction (in progress)
-- [x] Supabase Storage bucket (`scan-photos`, private) for report/progress
-      photos, with RLS policies restricting each user to their own
-      `user_id/`-prefixed folder
-- [x] `POST /api/extract` — accepts an image, calls Gemini
-      (`gemini-3.8-flash`) with the extraction prompt tuned to Evolt 360's
-      report layout, returns parsed JSON
-- [x] Extraction failures degrade gracefully — returns a JSON error the
-      frontend can show, never blocks manual entry
-- [x] Per-user daily rate limit on `/api/extract` (in-memory counter) so one
-      user can't burn through the shared Gemini quota
-- [ ] Wire the extracted/uploaded photo into actual Storage bucket writes
-      (currently `/api/extract` reads the upload and calls Gemini, but does
-      not yet persist the photo to Storage — that lands with Phase 3's scan
-      creation, since a photo only needs saving once the scan is actually
-      created)
+### Phase 2 — Compact manual tracking ✅ done
+- [x] Add editable profile setup for height, gender, and age
+- [x] Reduce scan entry to date, weight, body-fat percentage, skeletal muscle
+      mass, and optional notes
+- [x] Remove image extraction, Gemini, and scan-photo storage
 
-### Phase 3 — CRUD API
-- [ ] `POST /api/scans`, `GET /api/scans`, `DELETE /api/scans/:id` — all
+### Phase 3 — CRUD API ✅ done
+- [x] `POST /api/scans`, `GET /api/scans`, `DELETE /api/scans/:id` — all
       scoped to `request.user_id`, never a client-supplied user id
-- [ ] `GET /api/goals`, `PUT /api/goals` — same scoping rule
-- [ ] Basic input validation (date required, numeric fields sane ranges)
-- [ ] Ownership check on delete (`scan.user_id == request.user_id`) before
+- [x] `GET /api/goals`, `PUT /api/goals` — same scoping rule
+- [x] Basic input validation (date required, numeric fields sane ranges)
+- [x] Ownership check on delete (`scan.user_id == request.user_id`) before
       allowing the operation, not just filtering the list view
 
-### Phase 4 — Frontend build
-- [ ] Build the shared shell (`web/index.html`): hamburger menu opening a
+### Phase 4 — Frontend build ✅ done
+- [x] Build the shared shell (`web/index.html`): hamburger menu opening a
       left-side drawer on mobile, fixed left sidebar on desktop; tab nav
       (Log scan / Trends / Goals, with Nutrition greyed out as "soon");
       auth/token handling; shared `fetch` helper — this is what future
       features plug into
-- [ ] Build `web/scans.js` as the scans feature's tab: Log scan (upload +
-      manual-entry form), Trends (Chart.js line chart + latest-scan summary
-      card), Goals (target form + progress bars) — see the UI mockup used
-      during planning for the exact layout
-- [ ] Keep the three-tab layout and manual-entry fallback working even if
-      `/api/extract` is down or errors
-- [ ] Embed static assets in the Go binary
+- [x] Build `web/scans.js` as the scans feature's UI: Log scan (manual-entry
+      form), Trends (Chart.js line chart + latest-scan summary card), Goals
+      (target form + progress bars), and editable profile setup
+- [x] Keep the three-tab layout focused on the compact manual-tracking flow
+- [x] Embed static assets in the Go binary
 
 ### Phase 5 — Deploy
 - [ ] Push to GitHub, connect Render, set env vars:
@@ -200,12 +181,6 @@ JWTs. Env vars are `SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY`.
       open registration, if you don't want a public app
 
 ## Open questions to confirm before/during build
-- Confirm whether to proxy image uploads through the backend or upload
-  straight to Supabase Storage from the browser using a short-lived client
-  token (proxying is simpler and keeps the secret key server-only —
-  default to proxying unless upload volume becomes a bottleneck, which it
-  won't at this scale). **Resolved: proxying**, per this doc's original default.
-- ~~Confirm Gemini API key setup~~ — done (Google AI Studio, no card).
 - Decide open signup vs. invite-only for other users joining (Supabase Auth
   supports both — invite-only just means disabling public signup and adding
   users manually or via an invite link).

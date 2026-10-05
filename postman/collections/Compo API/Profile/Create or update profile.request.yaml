@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/api/profile/"
+method: PUT
+headers:
+  Authorization: Bearer {{access_token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "height_cm": 175,
+      "gender": "male",
+      "age": 30
+    }
+order: 2000

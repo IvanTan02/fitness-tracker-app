@@ -34,28 +34,11 @@ func listScansHandler(db *pgxpool.Pool) http.HandlerFunc {
 // createScanRequest mirrors NewScan but as JSON-decodable pointer fields, so
 // omitted fields stay nil rather than becoming zero values.
 type createScanRequest struct {
-	Date              string   `json:"date"`
-	Weight            *float64 `json:"weight"`
-	BodyFat           *float64 `json:"body_fat"`
-	LeanBodyMass      *float64 `json:"lean_body_mass"`
-	BodyFatMass       *float64 `json:"body_fat_mass"`
-	SMM               *float64 `json:"smm"`
-	VisceralFat       *float64 `json:"visceral_fat"`
-	BMR               *float64 `json:"bmr"`
-	TEE               *float64 `json:"tee"`
-	LeanLeftArm       *float64 `json:"lean_left_arm"`
-	LeanRightArm      *float64 `json:"lean_right_arm"`
-	LeanTrunk         *float64 `json:"lean_trunk"`
-	LeanLeftLeg       *float64 `json:"lean_left_leg"`
-	LeanRightLeg      *float64 `json:"lean_right_leg"`
-	FatLeftArm        *float64 `json:"fat_left_arm"`
-	FatRightArm       *float64 `json:"fat_right_arm"`
-	FatTrunk          *float64 `json:"fat_trunk"`
-	FatLeftLeg        *float64 `json:"fat_left_leg"`
-	FatRightLeg       *float64 `json:"fat_right_leg"`
-	Notes             *string  `json:"notes"`
-	ReportPhotoPath   *string  `json:"report_photo_path"`
-	ProgressPhotoPath *string  `json:"progress_photo_path"`
+	Date    string   `json:"date"`
+	Weight  *float64 `json:"weight"`
+	BodyFat *float64 `json:"body_fat"`
+	SMM     *float64 `json:"smm"`
+	Notes   *string  `json:"notes"`
 }
 
 func createScanHandler(db *pgxpool.Pool) http.HandlerFunc {
@@ -74,28 +57,11 @@ func createScanHandler(db *pgxpool.Pool) http.HandlerFunc {
 		}
 
 		scan, err := CreateScan(r.Context(), db, userID, NewScan{
-			Date:              req.Date,
-			Weight:            req.Weight,
-			BodyFat:           req.BodyFat,
-			LeanBodyMass:      req.LeanBodyMass,
-			BodyFatMass:       req.BodyFatMass,
-			SMM:               req.SMM,
-			VisceralFat:       req.VisceralFat,
-			BMR:               req.BMR,
-			TEE:               req.TEE,
-			LeanLeftArm:       req.LeanLeftArm,
-			LeanRightArm:      req.LeanRightArm,
-			LeanTrunk:         req.LeanTrunk,
-			LeanLeftLeg:       req.LeanLeftLeg,
-			LeanRightLeg:      req.LeanRightLeg,
-			FatLeftArm:        req.FatLeftArm,
-			FatRightArm:       req.FatRightArm,
-			FatTrunk:          req.FatTrunk,
-			FatLeftLeg:        req.FatLeftLeg,
-			FatRightLeg:       req.FatRightLeg,
-			Notes:             req.Notes,
-			ReportPhotoPath:   req.ReportPhotoPath,
-			ProgressPhotoPath: req.ProgressPhotoPath,
+			Date:    req.Date,
+			Weight:  req.Weight,
+			BodyFat: req.BodyFat,
+			SMM:     req.SMM,
+			Notes:   req.Notes,
 		})
 		if err != nil {
 			log.Printf("creating scan: %v", err)
@@ -190,24 +156,9 @@ func validateScanRequest(req createScanRequest) error {
 		val      *float64
 		min, max float64
 	}{
-		"weight":         {req.Weight, 20, 400},
-		"body_fat":       {req.BodyFat, 1, 70},
-		"lean_body_mass": {req.LeanBodyMass, 5, 200},
-		"body_fat_mass":  {req.BodyFatMass, 0, 200},
-		"smm":            {req.SMM, 5, 100},
-		"visceral_fat":   {req.VisceralFat, 0, 60},
-		"bmr":            {req.BMR, 500, 5000},
-		"tee":            {req.TEE, 500, 8000},
-		"lean_left_arm":  {req.LeanLeftArm, 0, 30},
-		"lean_right_arm": {req.LeanRightArm, 0, 30},
-		"lean_trunk":     {req.LeanTrunk, 0, 60},
-		"lean_left_leg":  {req.LeanLeftLeg, 0, 40},
-		"lean_right_leg": {req.LeanRightLeg, 0, 40},
-		"fat_left_arm":   {req.FatLeftArm, 0, 20},
-		"fat_right_arm":  {req.FatRightArm, 0, 20},
-		"fat_trunk":      {req.FatTrunk, 0, 60},
-		"fat_left_leg":   {req.FatLeftLeg, 0, 30},
-		"fat_right_leg":  {req.FatRightLeg, 0, 30},
+		"weight":   {req.Weight, 20, 400},
+		"body_fat": {req.BodyFat, 1, 70},
+		"smm":      {req.SMM, 5, 100},
 	}
 
 	for name, r := range ranges {

@@ -1,0 +1,2 @@
+$kind: collection
+description: Select the Compo - Local environment, set auth_email and auth_password, then run Sign in (get JWT). Create scan saves its returned id for Delete scan.

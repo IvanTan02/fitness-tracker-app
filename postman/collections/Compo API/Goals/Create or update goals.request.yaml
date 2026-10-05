@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{base_url}}/api/goals/"
+method: PUT
+headers:
+  Authorization: Bearer {{access_token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "weight": 70,
+      "body_fat": 15,
+      "smm": 35
+    }
+order: 2000

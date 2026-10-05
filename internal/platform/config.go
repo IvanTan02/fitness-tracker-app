@@ -1,5 +1,5 @@
 // Package platform holds shared infrastructure used by every feature:
-// configuration, the Postgres pool, and (later) the Gemini client.
+// configuration and the Postgres pool.
 package platform
 
 import (
@@ -15,7 +15,6 @@ type Config struct {
 	SupabaseURL            string
 	SupabasePublishableKey string
 	SupabaseSecretKey      string
-	GeminiAPIKey           string
 }
 
 // LoadConfig reads configuration from environment variables.
@@ -26,7 +25,6 @@ func LoadConfig() (Config, error) {
 		SupabaseURL:            os.Getenv("SUPABASE_URL"),
 		SupabasePublishableKey: os.Getenv("SUPABASE_PUBLISHABLE_KEY"),
 		SupabaseSecretKey:      os.Getenv("SUPABASE_SECRET_KEY"),
-		GeminiAPIKey:           os.Getenv("GEMINI_API_KEY"),
 	}
 
 	required := map[string]string{
@@ -34,7 +32,6 @@ func LoadConfig() (Config, error) {
 		"SUPABASE_URL":             cfg.SupabaseURL,
 		"SUPABASE_PUBLISHABLE_KEY": cfg.SupabasePublishableKey,
 		"SUPABASE_SECRET_KEY":      cfg.SupabaseSecretKey,
-		"GEMINI_API_KEY":           cfg.GeminiAPIKey,
 	}
 	for name, val := range required {
 		if val == "" {

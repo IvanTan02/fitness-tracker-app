@@ -1,0 +1,16 @@
+name: Compo - Local
+values:
+  - key: base_url
+    value: 'http://localhost:8080'
+  - key: supabase_url
+    value: 'https://qewdmqedvtnhssymfmyb.supabase.co'
+  - key: supabase_publishable_key
+    value: sb_publishable_Xz8Bb8CuySODs7LnVQzQTw__SH2ph_j
+  - key: auth_email
+    value: ivan.tanyw@paynet.my
+  - key: auth_password
+    value: ''
+  - key: access_token
+    value: ''
+  - key: scan_id
+    value: ''

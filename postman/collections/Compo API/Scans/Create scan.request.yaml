@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{base_url}}/api/scans/"
+method: POST
+headers:
+  Authorization: Bearer {{access_token}}
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "date": "2026-09-28",
+      "weight": 69.7,
+      "body_fat": 18.1,
+      "smm": 31.8,
+      "notes": ""
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Scan created', () => pm.response.to.have.status(201));
+      const body = pm.response.json();
+      if (body.id) pm.environment.set('scan_id', body.id);
+    language: text/javascript
+order: 2000

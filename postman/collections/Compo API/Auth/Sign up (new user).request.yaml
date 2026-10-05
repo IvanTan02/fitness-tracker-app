@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{supabase_url}}/auth/v1/signup"
+method: POST
+headers:
+  apikey: "{{supabase_publishable_key}}"
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{auth_email}}",
+      "password": "{{auth_password}}"
+    }
+order: 2000

@@ -13,6 +13,7 @@ import (
 
 	"github.com/ivantan02/fitness-tracker-app/internal/auth"
 	"github.com/ivantan02/fitness-tracker-app/internal/platform"
+	"github.com/ivantan02/fitness-tracker-app/internal/profile"
 	"github.com/ivantan02/fitness-tracker-app/internal/scans"
 	appweb "github.com/ivantan02/fitness-tracker-app/web"
 )
@@ -36,8 +37,6 @@ func main() {
 		log.Fatalf("setting up auth verifier: %v", err)
 	}
 
-	gemini := platform.NewGeminiClient(cfg.GeminiAPIKey)
-
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
@@ -47,7 +46,8 @@ func main() {
 
 	r.Group(func(r chi.Router) {
 		r.Use(verifier.Middleware())
-		scans.Register(r, db, gemini)
+		scans.Register(r, db)
+		profile.Register(r, db)
 	})
 
 	r.Handle("/*", appweb.Handler())
