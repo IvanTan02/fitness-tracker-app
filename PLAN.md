@@ -36,7 +36,7 @@ structure" below.
 | Backend | Go (`chi` router) | — |
 | Database + Auth + Storage | **Supabase** (Postgres, Auth, Storage all in one project) | 500MB DB, 1GB storage, 50,000 MAU, all free — one dashboard instead of three services |
 | AI vision (photo → numbers) | **Google Gemini** (`gemini-3.8-flash`, the current free vision-capable model — Gemini 2.5 Flash was retired for new API keys during build) | Free tier, vision-capable, shared across all users — see rate-limit note below |
-| Hosting | **Render** free web service | Sleeps after 15 min idle; ~30s cold start, acceptable for personal use |
+| Hosting | **Vercel** Go Function | Go runtime is currently beta; one function serves the embedded app and API |
 | Frontend | Static HTML/CSS/Chart.js, embedded in the Go binary via `embed.FS` | One deployable binary, no separate frontend host |
 | Auth | **Supabase Auth** (email + password, verification & reset emails included) | Battery-included — no hand-rolled bcrypt/session code needed |
 | Keep-alive | GitHub Actions cron, pings Supabase every 3 days | Free tier projects pause after 7 days idle; this prevents it with ~10 lines of YAML |
@@ -48,10 +48,10 @@ Go. The trade-off is free-tier projects pause after 7 days of inactivity —
 solved with the keep-alive cron job in Phase 1, so it's a non-issue in
 practice.
 
-**Scaling note:** the free tiers above (Supabase, Gemini, Render) comfortably
+**Scaling note:** the free tiers above (Supabase and Vercel) comfortably
 support a small number of users (think single digits to low tens) without
-paying anything. If this ever grows past that, Gemini's shared 250 req/day
-cap is the first thing that will need addressing — see Phase 6.
+paying anything. Revisit database connections and function usage if the app
+grows beyond that.
 
 ## Project structure
 
@@ -133,7 +133,8 @@ database layer, not just in application code — see Phase 1.
 
 Note: Supabase's key system changed since this plan was first written — it
 now issues **publishable**/**secret** keys instead of legacy anon/service_role
-JWTs. Env vars are `SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY`.
+JWTs. This app only needs `SUPABASE_PUBLISHABLE_KEY`; privileged database
+access uses `DATABASE_URL`, and no Supabase secret key is exposed or loaded.
 
 ### Phase 2 — Compact manual tracking ✅ done
 - [x] Add editable profile setup for height, gender, and age
@@ -162,21 +163,19 @@ JWTs. Env vars are `SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_SECRET_KEY`.
 - [x] Embed static assets in the Go binary
 
 ### Phase 5 — Deploy
-- [ ] Push to GitHub, connect Render, set env vars:
-      `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
-      (server-side only, never shipped to the frontend), `DATABASE_URL`
-      (Supabase's Postgres connection string), `GEMINI_API_KEY`
-- [ ] Confirm HTTPS works, confirm cold-start behavior is acceptable
+- [x] Deploy to Vercel and set env vars:
+      `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `DATABASE_URL`
+      (Supabase's pooled Postgres connection string)
+- [x] Confirm HTTPS works, confirm cold-start behavior is acceptable
+- [ ] Grant Vercel access to the GitHub repository and connect it for
+      automatic deployments on future pushes
 - [ ] Confirm the GitHub Actions keep-alive workflow is running and actually
       reaching Supabase (check the Actions tab after the first scheduled run)
 
 ### Phase 6 — Polish & multi-user headroom
 - [ ] PWA manifest so it can be added to the phone home screen
-- [ ] Optional: cron/uptime ping to reduce Render cold starts
+- [ ] Optional: monitor Vercel Function cold starts
 - [ ] Optional: export scans as CSV
-- [ ] If/when a second user actually joins: revisit the shared Gemini
-      250 req/day cap (per-user daily counter + friendly "try again
-      tomorrow" message is enough at small scale before paying for anything)
 - [ ] Optional: simple invite-only signup (a signup code) rather than fully
       open registration, if you don't want a public app
 

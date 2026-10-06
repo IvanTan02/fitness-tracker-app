@@ -14,7 +14,6 @@ type Config struct {
 	DatabaseURL            string
 	SupabaseURL            string
 	SupabasePublishableKey string
-	SupabaseSecretKey      string
 }
 
 // LoadConfig reads configuration from environment variables.
@@ -24,14 +23,12 @@ func LoadConfig() (Config, error) {
 		DatabaseURL:            os.Getenv("DATABASE_URL"),
 		SupabaseURL:            os.Getenv("SUPABASE_URL"),
 		SupabasePublishableKey: os.Getenv("SUPABASE_PUBLISHABLE_KEY"),
-		SupabaseSecretKey:      os.Getenv("SUPABASE_SECRET_KEY"),
 	}
 
 	required := map[string]string{
 		"DATABASE_URL":             cfg.DatabaseURL,
 		"SUPABASE_URL":             cfg.SupabaseURL,
 		"SUPABASE_PUBLISHABLE_KEY": cfg.SupabasePublishableKey,
-		"SUPABASE_SECRET_KEY":      cfg.SupabaseSecretKey,
 	}
 	for name, val := range required {
 		if val == "" {
