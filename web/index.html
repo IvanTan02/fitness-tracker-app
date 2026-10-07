@@ -4,7 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#121714">
+  <meta name="application-name" content="Compo">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Compo">
   <title>Compo · Body composition</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
@@ -67,6 +74,7 @@
         <a class="nav-item" href="#goals" data-view="goals"><span class="nav-icon">◎</span>Goals</a>
         <p class="nav-label nav-label-space">Coming next</p>
         <span class="nav-item disabled"><span class="nav-icon">◇</span>Nutrition<span class="soon">Soon</span></span>
+        <button id="install-app" class="nav-item install-app" type="button" hidden><span class="nav-icon">⇩</span>Install Compo</button>
       </nav>
       <div class="sidebar-footer">
         <button id="profile-button" class="profile-chip" type="button">

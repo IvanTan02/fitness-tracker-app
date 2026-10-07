@@ -8,6 +8,7 @@
   let config;
   let session;
   let authMode = "signin";
+  let installPrompt;
 
   const readSession = () => {
     try { return JSON.parse(localStorage.getItem(sessionKey)); } catch { return null; }
@@ -169,6 +170,23 @@
     if (event.currentTarget.dataset.required === "true") event.preventDefault();
   });
 
+  window.addEventListener("beforeinstallprompt", event => {
+    event.preventDefault();
+    installPrompt = event;
+    document.querySelector("#install-app").hidden = false;
+  });
+  document.querySelector("#install-app").addEventListener("click", async () => {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    installPrompt = null;
+    document.querySelector("#install-app").hidden = true;
+  });
+  window.addEventListener("appinstalled", () => {
+    installPrompt = null;
+    document.querySelector("#install-app").hidden = true;
+    toast("Compo installed");
+  });
+
   const boot = async () => {
     try {
       const response = await fetch("/api/config");
@@ -184,4 +202,12 @@
   };
 
   boot();
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch(error => {
+        console.warn("Service worker registration failed:", error);
+      });
+    });
+  }
 })();

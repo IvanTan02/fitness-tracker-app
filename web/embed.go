@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-//go:embed index.html styles.css app.js scans.js
+//go:embed index.html styles.css app.js scans.js manifest.webmanifest sw.js icons/*
 var files embed.FS
 
 // Handler serves the embedded frontend assets.

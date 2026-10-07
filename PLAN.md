@@ -173,7 +173,7 @@ access uses `DATABASE_URL`, and no Supabase secret key is exposed or loaded.
       reaching Supabase (check the Actions tab after the first scheduled run)
 
 ### Phase 6 — Polish & multi-user headroom
-- [ ] PWA manifest so it can be added to the phone home screen
+- [x] PWA manifest so it can be added to the phone home screen
 - [ ] Optional: monitor Vercel Function cold starts
 - [ ] Optional: export scans as CSV
 - [ ] Optional: simple invite-only signup (a signup code) rather than fully
