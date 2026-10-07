@@ -16,5 +16,15 @@ func Handler() http.Handler {
 	if err != nil {
 		panic("creating embedded web filesystem: " + err.Error())
 	}
-	return http.FileServer(http.FS(assets))
+	fileServer := http.FileServer(http.FS(assets))
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/manifest.webmanifest":
+			w.Header().Set("Content-Type", "application/manifest+json")
+		case "/sw.js":
+			w.Header().Set("Cache-Control", "no-cache")
+		}
+		fileServer.ServeHTTP(w, r)
+	})
 }

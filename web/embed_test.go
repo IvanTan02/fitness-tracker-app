@@ -37,6 +37,9 @@ func TestManifestIsValidJSON(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/manifest.webmanifest", nil)
 	response := httptest.NewRecorder()
 	Handler().ServeHTTP(response, request)
+	if contentType := response.Header().Get("Content-Type"); contentType != "application/manifest+json" {
+		t.Fatalf("Content-Type = %q, want application/manifest+json", contentType)
+	}
 
 	var manifest map[string]any
 	if err := json.Unmarshal(response.Body.Bytes(), &manifest); err != nil {
