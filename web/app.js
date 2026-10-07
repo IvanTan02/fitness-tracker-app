@@ -65,8 +65,14 @@
 
   const setLoading = (button, loading) => {
     button.disabled = loading;
-    button.dataset.original ||= button.innerHTML;
-    button.innerHTML = loading ? "Working…" : button.dataset.original;
+    button.setAttribute("aria-busy", String(loading));
+    const label = button.querySelector("#auth-submit-label");
+    if (label) {
+      label.textContent = loading ? "Working…" : authMode === "signin" ? "Sign in" : "Create account";
+    } else {
+      button.dataset.original ||= button.innerHTML;
+      button.innerHTML = loading ? "Working…" : button.dataset.original;
+    }
   };
 
   const showAuth = () => {
@@ -133,6 +139,7 @@
   const setAuthMode = (mode) => {
     authMode = mode;
     const signingIn = mode === "signin";
+    document.querySelector("#auth-eyebrow").textContent = signingIn ? "Welcome back" : "Get started";
     document.querySelector("#auth-title").textContent = signingIn ? "Sign in to your account" : "Create your account";
     document.querySelector("#auth-subtitle").textContent = signingIn ? "Continue tracking your progress." : "Start building a clearer picture of your progress.";
     document.querySelector("#auth-submit-label").textContent = signingIn ? "Sign in" : "Create account";
