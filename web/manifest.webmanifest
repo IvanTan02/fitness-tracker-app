@@ -1,5 +1,5 @@
 {
-  "name": "Compo — Body Composition",
+  "name": "Compo — Fitness Management",
   "short_name": "Compo",
   "description": "Track body composition scans, trends, and goals.",
   "id": "/",
@@ -29,5 +29,9 @@
       "purpose": "maskable"
     }
   ],
-  "categories": ["health", "fitness", "lifestyle"]
+  "categories": [
+    "health",
+    "fitness",
+    "lifestyle"
+  ]
 }
