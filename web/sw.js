@@ -1,4 +1,4 @@
-const CACHE_NAME = "compo-shell-v1";
+const CACHE_NAME = "compo-shell-v2";
 const APP_SHELL = [
   "/",
   "/styles.css",
