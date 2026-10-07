@@ -96,9 +96,15 @@
     dialog.showModal();
   };
 
+  let navScrollY = 0;
+
   const closeNav = () => {
+    const wasScrollLocked = document.body.classList.contains("nav-open");
     document.querySelector("#sidebar").classList.remove("open");
     document.querySelector("#nav-scrim").classList.remove("open");
+    document.body.classList.remove("nav-open");
+    document.body.style.top = "";
+    if (wasScrollLocked) window.scrollTo(0, navScrollY);
   };
 
   authForm.addEventListener("submit", async (event) => {
@@ -137,6 +143,9 @@
 
   document.querySelector("#auth-switch").addEventListener("click", () => setAuthMode(authMode === "signin" ? "signup" : "signin"));
   document.querySelector("#open-nav").addEventListener("click", () => {
+    navScrollY = window.scrollY;
+    document.body.style.top = `-${navScrollY}px`;
+    document.body.classList.add("nav-open");
     document.querySelector("#sidebar").classList.add("open");
     document.querySelector("#nav-scrim").classList.add("open");
   });
