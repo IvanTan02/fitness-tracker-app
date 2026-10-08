@@ -124,7 +124,7 @@
       };
       const data = authMode === "signin"
         ? await authRequest("token?grant_type=password", credentials)
-        : await authRequest("signup", credentials);
+        : await authRequest(`signup?redirect_to=${encodeURIComponent(new URL("/", window.location.origin).href)}`, credentials);
       if (!data.access_token) {
         toast("Check your inbox to confirm your email, then sign in.");
         setAuthMode("signin");
