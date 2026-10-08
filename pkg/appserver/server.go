@@ -52,8 +52,8 @@ func New(ctx context.Context) (*App, error) {
 	r.Get("/api/config", configHandler(cfg))
 	r.Group(func(r chi.Router) {
 		r.Use(verifier.Middleware())
-		scans.Register(r, db)
-		profile.Register(r, db)
+		scans.Register(r, db, cfg.AppEnvironment)
+		profile.Register(r, db, cfg.AppEnvironment)
 	})
 	r.Handle("/*", appweb.Handler())
 

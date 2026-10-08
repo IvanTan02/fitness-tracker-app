@@ -40,9 +40,9 @@ func scanRow(row pgx.Row) (Scan, error) {
 	return s, err
 }
 
-// ListScans returns all scans for userID, most recent first.
-func ListScans(ctx context.Context, db *pgxpool.Pool, userID string) ([]Scan, error) {
-	rows, err := db.Query(ctx, `select `+scanColumns+` from scans where user_id = $1 order by date desc`, userID)
+// ListScans returns all scans for userID in environment, most recent first.
+func ListScans(ctx context.Context, db *pgxpool.Pool, userID, environment string) ([]Scan, error) {
+	rows, err := db.Query(ctx, `select `+scanColumns+` from scans where user_id = $1 and environment = $2 order by date desc`, userID, environment)
 	if err != nil {
 		return nil, fmt.Errorf("querying scans: %w", err)
 	}
@@ -62,15 +62,15 @@ func ListScans(ctx context.Context, db *pgxpool.Pool, userID string) ([]Scan, er
 	return scans, nil
 }
 
-// CreateScan inserts a new scan for userID and returns the stored row.
-func CreateScan(ctx context.Context, db *pgxpool.Pool, userID string, s NewScan) (Scan, error) {
+// CreateScan inserts a new scan for userID in environment and returns it.
+func CreateScan(ctx context.Context, db *pgxpool.Pool, userID, environment string, s NewScan) (Scan, error) {
 	row := db.QueryRow(ctx, `
 		insert into scans (
-		user_id, date, weight, body_fat, smm, notes
+		user_id, environment, date, weight, body_fat, smm, notes
 		) values (
-			$1, $2, $3, $4, $5, $6
+			$1, $2, $3, $4, $5, $6, $7
 		) returning `+scanColumns,
-		userID, s.Date, s.Weight, s.BodyFat, s.SMM, s.Notes,
+		userID, environment, s.Date, s.Weight, s.BodyFat, s.SMM, s.Notes,
 	)
 
 	scan, err := scanRow(row)
@@ -81,11 +81,10 @@ func CreateScan(ctx context.Context, db *pgxpool.Pool, userID string, s NewScan)
 }
 
 // DeleteScan deletes the scan with the given id, but only if it belongs to
-// userID. Returns false if no matching row was found (either it doesn't
-// exist, or it belongs to someone else) — the handler treats both as 404,
-// never revealing which.
-func DeleteScan(ctx context.Context, db *pgxpool.Pool, userID, scanID string) (bool, error) {
-	tag, err := db.Exec(ctx, `delete from scans where id = $1 and user_id = $2`, scanID, userID)
+// userID in environment. Returns false if no matching row was found — the
+// handler treats missing, wrong-user, and wrong-environment rows as 404.
+func DeleteScan(ctx context.Context, db *pgxpool.Pool, userID, environment, scanID string) (bool, error) {
+	tag, err := db.Exec(ctx, `delete from scans where id = $1 and user_id = $2 and environment = $3`, scanID, userID, environment)
 	if err != nil {
 		return false, fmt.Errorf("deleting scan: %w", err)
 	}

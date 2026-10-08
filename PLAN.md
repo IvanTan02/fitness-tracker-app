@@ -164,7 +164,7 @@ access uses `DATABASE_URL`, and no Supabase secret key is exposed or loaded.
 
 ### Phase 5 — Deploy
 - [x] Deploy to Vercel and set env vars:
-      `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `DATABASE_URL`
+      `APP_ENV`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `DATABASE_URL`
       (Supabase's pooled Postgres connection string)
 - [x] Confirm HTTPS works, confirm cold-start behavior is acceptable
 - [ ] Grant Vercel access to the GitHub repository and connect it for

@@ -16,11 +16,11 @@ import (
 
 const dateLayout = "2006-01-02"
 
-func listScansHandler(db *pgxpool.Pool) http.HandlerFunc {
+func listScansHandler(db *pgxpool.Pool, environment string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := auth.UserID(r.Context())
 
-		scans, err := ListScans(r.Context(), db, userID)
+		scans, err := ListScans(r.Context(), db, userID, environment)
 		if err != nil {
 			log.Printf("listing scans: %v", err)
 			http.Error(w, "failed to list scans", http.StatusInternalServerError)
@@ -41,7 +41,7 @@ type createScanRequest struct {
 	Notes   *string  `json:"notes"`
 }
 
-func createScanHandler(db *pgxpool.Pool) http.HandlerFunc {
+func createScanHandler(db *pgxpool.Pool, environment string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := auth.UserID(r.Context())
 
@@ -56,7 +56,7 @@ func createScanHandler(db *pgxpool.Pool) http.HandlerFunc {
 			return
 		}
 
-		scan, err := CreateScan(r.Context(), db, userID, NewScan{
+		scan, err := CreateScan(r.Context(), db, userID, environment, NewScan{
 			Date:    req.Date,
 			Weight:  req.Weight,
 			BodyFat: req.BodyFat,
@@ -73,12 +73,12 @@ func createScanHandler(db *pgxpool.Pool) http.HandlerFunc {
 	}
 }
 
-func deleteScanHandler(db *pgxpool.Pool) http.HandlerFunc {
+func deleteScanHandler(db *pgxpool.Pool, environment string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := auth.UserID(r.Context())
 		scanID := chi.URLParam(r, "id")
 
-		deleted, err := DeleteScan(r.Context(), db, userID, scanID)
+		deleted, err := DeleteScan(r.Context(), db, userID, environment, scanID)
 		if err != nil {
 			log.Printf("deleting scan: %v", err)
 			http.Error(w, "failed to delete scan", http.StatusInternalServerError)
@@ -93,11 +93,11 @@ func deleteScanHandler(db *pgxpool.Pool) http.HandlerFunc {
 	}
 }
 
-func getGoalsHandler(db *pgxpool.Pool) http.HandlerFunc {
+func getGoalsHandler(db *pgxpool.Pool, environment string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := auth.UserID(r.Context())
 
-		goals, err := GetGoals(r.Context(), db, userID)
+		goals, err := GetGoals(r.Context(), db, userID, environment)
 		if errors.Is(err, ErrGoalsNotFound) {
 			writeJSON(w, http.StatusOK, Goals{})
 			return
@@ -112,7 +112,7 @@ func getGoalsHandler(db *pgxpool.Pool) http.HandlerFunc {
 	}
 }
 
-func putGoalsHandler(db *pgxpool.Pool) http.HandlerFunc {
+func putGoalsHandler(db *pgxpool.Pool, environment string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := auth.UserID(r.Context())
 
@@ -127,7 +127,7 @@ func putGoalsHandler(db *pgxpool.Pool) http.HandlerFunc {
 			return
 		}
 
-		goals, err := UpsertGoals(r.Context(), db, userID, req)
+		goals, err := UpsertGoals(r.Context(), db, userID, environment, req)
 		if err != nil {
 			log.Printf("upserting goals: %v", err)
 			http.Error(w, "failed to save goals", http.StatusInternalServerError)

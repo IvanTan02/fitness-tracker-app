@@ -20,11 +20,11 @@ type Goals struct {
 // ErrGoalsNotFound means the user hasn't set any goals yet.
 var ErrGoalsNotFound = errors.New("goals not found")
 
-// GetGoals returns userID's goals, or ErrGoalsNotFound if they haven't set
-// any yet.
-func GetGoals(ctx context.Context, db *pgxpool.Pool, userID string) (Goals, error) {
+// GetGoals returns userID's goals in environment, or ErrGoalsNotFound if they
+// haven't set any yet.
+func GetGoals(ctx context.Context, db *pgxpool.Pool, userID, environment string) (Goals, error) {
 	var g Goals
-	err := db.QueryRow(ctx, `select weight, body_fat, smm from goals where user_id = $1`, userID).
+	err := db.QueryRow(ctx, `select weight, body_fat, smm from goals where user_id = $1 and environment = $2`, userID, environment).
 		Scan(&g.Weight, &g.BodyFat, &g.SMM)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Goals{}, ErrGoalsNotFound
@@ -35,18 +35,18 @@ func GetGoals(ctx context.Context, db *pgxpool.Pool, userID string) (Goals, erro
 	return g, nil
 }
 
-// UpsertGoals creates or replaces userID's goals.
-func UpsertGoals(ctx context.Context, db *pgxpool.Pool, userID string, g Goals) (Goals, error) {
+// UpsertGoals creates or replaces userID's goals in environment.
+func UpsertGoals(ctx context.Context, db *pgxpool.Pool, userID, environment string, g Goals) (Goals, error) {
 	var out Goals
 	err := db.QueryRow(ctx, `
-		insert into goals (user_id, weight, body_fat, smm)
-		values ($1, $2, $3, $4)
-		on conflict (user_id) do update set
+		insert into goals (user_id, environment, weight, body_fat, smm)
+		values ($1, $2, $3, $4, $5)
+		on conflict (user_id, environment) do update set
 			weight = excluded.weight,
 			body_fat = excluded.body_fat,
 			smm = excluded.smm
 		returning weight, body_fat, smm`,
-		userID, g.Weight, g.BodyFat, g.SMM,
+		userID, environment, g.Weight, g.BodyFat, g.SMM,
 	).Scan(&out.Weight, &out.BodyFat, &out.SMM)
 	if err != nil {
 		return Goals{}, fmt.Errorf("upserting goals: %w", err)

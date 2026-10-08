@@ -11,6 +11,7 @@ import (
 // if anything required is missing, rather than discovering it at request time.
 type Config struct {
 	Port                   string
+	AppEnvironment         string
 	DatabaseURL            string
 	SupabaseURL            string
 	SupabasePublishableKey string
@@ -20,12 +21,14 @@ type Config struct {
 func LoadConfig() (Config, error) {
 	cfg := Config{
 		Port:                   getEnvDefault("PORT", "8080"),
+		AppEnvironment:         os.Getenv("APP_ENV"),
 		DatabaseURL:            os.Getenv("DATABASE_URL"),
 		SupabaseURL:            os.Getenv("SUPABASE_URL"),
 		SupabasePublishableKey: os.Getenv("SUPABASE_PUBLISHABLE_KEY"),
 	}
 
 	required := map[string]string{
+		"APP_ENV":                  cfg.AppEnvironment,
 		"DATABASE_URL":             cfg.DatabaseURL,
 		"SUPABASE_URL":             cfg.SupabaseURL,
 		"SUPABASE_PUBLISHABLE_KEY": cfg.SupabasePublishableKey,
@@ -34,6 +37,9 @@ func LoadConfig() (Config, error) {
 		if val == "" {
 			return Config{}, fmt.Errorf("missing required env var %s", name)
 		}
+	}
+	if cfg.AppEnvironment != "development" && cfg.AppEnvironment != "production" {
+		return Config{}, fmt.Errorf("APP_ENV must be development or production")
 	}
 
 	return cfg, nil

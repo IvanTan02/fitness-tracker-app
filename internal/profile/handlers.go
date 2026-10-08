@@ -12,16 +12,16 @@ import (
 	"github.com/ivantan02/fitness-tracker-app/internal/auth"
 )
 
-func Register(r chi.Router, db *pgxpool.Pool) {
+func Register(r chi.Router, db *pgxpool.Pool, environment string) {
 	r.Route("/api/profile", func(r chi.Router) {
-		r.Get("/", getHandler(db))
-		r.Put("/", putHandler(db))
+		r.Get("/", getHandler(db, environment))
+		r.Put("/", putHandler(db, environment))
 	})
 }
 
-func getHandler(db *pgxpool.Pool) http.HandlerFunc {
+func getHandler(db *pgxpool.Pool, environment string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		p, err := Get(r.Context(), db, auth.UserID(r.Context()))
+		p, err := Get(r.Context(), db, auth.UserID(r.Context()), environment)
 		if errors.Is(err, ErrNotFound) {
 			writeJSON(w, http.StatusOK, nil)
 			return
@@ -35,7 +35,7 @@ func getHandler(db *pgxpool.Pool) http.HandlerFunc {
 	}
 }
 
-func putHandler(db *pgxpool.Pool) http.HandlerFunc {
+func putHandler(db *pgxpool.Pool, environment string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var p Profile
 		if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
@@ -46,7 +46,7 @@ func putHandler(db *pgxpool.Pool) http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		out, err := Upsert(r.Context(), db, auth.UserID(r.Context()), p)
+		out, err := Upsert(r.Context(), db, auth.UserID(r.Context()), environment, p)
 		if err != nil {
 			log.Printf("saving profile for user %s: %v", auth.UserID(r.Context()), err)
 			http.Error(w, "failed to save profile", http.StatusInternalServerError)
